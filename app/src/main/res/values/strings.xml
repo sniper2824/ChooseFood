@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">ChooseFood</string>
+    
+    <string name="mapbox_access_token">
+        pk.eyJ1Ijoic25pcGVyMjgyNCIsImEiOiJja3BkcXg2MTkxaGRpMnJsYXVnMG16cDhwIn0.nACJ5uraB9sRp-DwvpREYg
+    </string>
+    
+    <string name="walking">Walking</string>
+    <string name="foodpanda">FoodPanda</string>
+    <string name="ubereat">Uber Eat</string>
+    <string name="title_activity_location_pick">Map</string>
+    
+    <string name="chooseButton">Choose Here</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+</resources>
