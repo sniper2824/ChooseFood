@@ -12,12 +12,25 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = MainActivity.class.getName();
+
+    private TextView webText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +42,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (!netAvailable) {
             Toast.makeText(this, "Please Checking your Net is working", Toast.LENGTH_LONG).show();
         }
+
+        webText = findViewById(R.id.webText);
 
         /* Step 2 : 初始化三個按鈕 */
         initView();
@@ -56,6 +71,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startActivity(intent);
     }
 
+    private void foodPanda() {
+        Runnable runnable = () -> {
+            try {
+                Connection conn = Jsoup.connect("https://www.foodpanda.com.tw/restaurants/new?lat=24.749992&lng=121.0166887&vertical=restaurants");
+                conn.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:32.0) Gecko/    20100101 Firefox/32.0");
+                final Document docs = conn.get();
+                Elements datas = docs.getElementsByTag("script");
+                runOnUiThread(() -> {
+                    for (Element data : datas) {
+                        if (data.toString().startsWith("<script>window.__PRELOADED_STATE__")) {
+                            String vendorsText = new String(data.toString()
+                                    .substring(0, data.toString().indexOf("window.__PROVIDER_PROPS__") - 1)
+                                    .replace("<script>window.__PRELOADED_STATE__=", ""));
+                            Log.d(TAG, vendorsText);
+                            try {
+                                JSONObject vendors = new JSONObject(vendorsText);
+                                Log.d(TAG, vendors.toString());
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        }
+                    }
+                });
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+            }
+        };
+        new Thread(runnable).start();
+    }
+
     /**
      * 檢查網路連線
      *
@@ -79,9 +125,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Button walking = findViewById(R.id.walking);
         Button foodPanda = findViewById(R.id.foodpanda);
         Button uberEat = findViewById(R.id.ubereat);
+        Button test = findViewById(R.id.test);
 
         walking.setOnClickListener(this);
         foodPanda.setOnClickListener(this);
         uberEat.setOnClickListener(this);
+        test.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                foodPanda();
+            }
+        });
     }
 }

@@ -5,8 +5,11 @@ import android.util.Log;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.choosefood.model.FoodPandaInfo;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.DataNode;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -56,10 +59,23 @@ public class WebCrawlerActivity extends AppCompatActivity {
                 Connection conn = Jsoup.connect(url);
                 conn.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:32.0) Gecko/    20100101 Firefox/32.0");
                 final Document docs = conn.get();
-                Elements vendors = docs.getElementsByTag("script");
+                Elements datas = docs.getElementsByTag("script");
                 runOnUiThread(() -> {
-                    Log.d(TAG, ">>>>>>> " + vendors.toString());
-                    webText.setText(vendors.toString());
+                    for (Element data : datas) {
+                        for (DataNode node : data.dataNodes()) {
+                            if (node.toString().startsWith("window.__PRELOADED_STATE__")) {
+                                String dText = node.toString().substring(0, node.toString().indexOf("window.__PROVIDER_PROPS__"));
+                                try {
+                                    JSONObject vendors = (JSONObject) ((JSONObject) new JSONObject(dText).get("organicList")).get("vendors");
+                                    Log.d(TAG, "> VENDORS = " + vendors);
+                                    webText.setText(vendors.toString());
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+                            }
+                        }
+                    }
                 });
             } catch (IOException e) {
                 Log.e(TAG, e.getMessage());
