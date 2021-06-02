@@ -77,12 +77,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Connection conn = Jsoup.connect("https://www.foodpanda.com.tw/restaurants/new?lat=24.749992&lng=121.0166887&vertical=restaurants");
                 conn.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:32.0) Gecko/    20100101 Firefox/32.0");
                 final Document docs = conn.get();
-                Elements datas = docs.getElementsByTag("script");
+                Elements scripts = docs.getElementsByTag("script");
                 runOnUiThread(() -> {
-                    for (Element data : datas) {
-                        if (data.toString().startsWith("<script>window.__PRELOADED_STATE__")) {
-                            String vendorsText = new String(data.toString()
-                                    .substring(0, data.toString().indexOf("window.__PROVIDER_PROPS__") - 1)
+                    for (Element script : scripts) {
+                        if (script.toString().startsWith("<script>window.__PRELOADED_STATE__")) {
+                            // 太長導致JSONObject轉換失敗
+                            String vendorsText = new String(script.toString()
+                                    .substring(0, script.toString().indexOf("window.__PROVIDER_PROPS__") - 1)
                                     .replace("<script>window.__PRELOADED_STATE__=", ""));
                             Log.d(TAG, vendorsText);
                             try {
