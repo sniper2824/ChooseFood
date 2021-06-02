@@ -1,6 +1,11 @@
 *.iml
 .gradle
+gradle.*
+settings.*
+gradlew*
+gradle/*
 /local.properties
+/.idea/
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
@@ -13,3 +18,4 @@
 .externalNativeBuild
 .cxx
 local.properties
+/app/src/debug/res/values/google_maps_api.xml
