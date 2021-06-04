@@ -1,12 +1,11 @@
 package com.example.choosefood;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.webkit.JavascriptInterface;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,13 +17,13 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class WebCrawlerActivity extends AppCompatActivity {
 
     private static final String TAG = WebCrawlerActivity.class.getName();
 
     TextView webText;
-
 //    private WebView mWebView;
 
     @Override
@@ -64,20 +63,28 @@ public class WebCrawlerActivity extends AppCompatActivity {
                 final Document docs = conn.get();
                 Elements scripts = docs.getElementsByTag("script");
                 runOnUiThread(() -> {
+                    ArrayList<String> nameList = new ArrayList<>();
                     for (Element script : scripts) {
                         if (script.toString().startsWith("<script>window.__PRELOADED_STATE__")) {
                             try {
                                 JSONObject vendorsJson = new JSONObject(parsingFoodPanda(script.toString()));
                                 JSONArray vendors = vendorsJson.getJSONArray("vendors");
                                 for (int i = 0; i < vendors.length(); i++) {
-//                                    nameList.add(vendors.getJSONObject(i).get("name").toString());
-                                    Log.d(TAG, "Name = " + vendors.getJSONObject(i).get("name"));
+                                    nameList.add(vendors.getJSONObject(i).get("name").toString());
                                 }
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
                             break;
                         }
+                    }
+
+                    if (!nameList.isEmpty()) {
+                        Intent intent = new Intent(this, SlotMachineActivity.class);
+                        intent.putStringArrayListExtra("Food", nameList);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(this, "Can't find Restaurant !", Toast.LENGTH_LONG).show();
                     }
                 });
             } catch (IOException e) {
