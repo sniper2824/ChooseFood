@@ -14,4 +14,5 @@
     <string name="chooseButton">Choose Here</string>
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
+    <string name="start">start</string>
 </resources>

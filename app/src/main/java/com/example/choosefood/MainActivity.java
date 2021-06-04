@@ -25,12 +25,15 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = MainActivity.class.getName();
 
     private TextView webText;
+    private List<String> nameList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         webText = findViewById(R.id.webText);
+        nameList = new ArrayList<>();
 
         /* Step 2 : 初始化三個按鈕 */
         initView();
@@ -71,29 +75,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startActivity(intent);
     }
 
-    private void foodPanda() {
+    private void foodPanda(View v) {
         Runnable runnable = () -> {
             try {
-                Connection conn = Jsoup.connect("https://www.foodpanda.com.tw/restaurants/new?lat=24.749992&lng=121.0166887&vertical=restaurants");
+                Connection conn = Jsoup.connect("https://www.foodpanda.com.tw/restaurants/new?lat=25.000114&lng=121.516725&vertical=restaurants");
                 conn.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:32.0) Gecko/    20100101 Firefox/32.0");
                 final Document docs = conn.get();
                 Elements scripts = docs.getElementsByTag("script");
                 runOnUiThread(() -> {
                     for (Element script : scripts) {
                         if (script.toString().startsWith("<script>window.__PRELOADED_STATE__")) {
-                            // 太長導致JSONObject轉換失敗
-                            String vendorsText = new String(script.toString()
-                                    .substring(0, script.toString().indexOf("window.__PROVIDER_PROPS__") - 1)
-                                    .replace("<script>window.__PRELOADED_STATE__=", ""));
-                            Log.d(TAG, vendorsText);
                             try {
-                                JSONObject vendors = new JSONObject(vendorsText);
-                                Log.d(TAG, vendors.toString());
+                                JSONObject vendorsJson = new JSONObject(parsingFoodPanda(script.toString()));
+                                JSONArray vendors = vendorsJson.getJSONArray("vendors");
+                                for (int i = 0; i < vendors.length(); i++) {
+                                    nameList.add(vendors.getJSONObject(i).get("name").toString());
+                                }
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
                             break;
                         }
+                    }
+                    if (!nameList.isEmpty()) {
+                        Intent intent = new Intent(v.getContext(), SlotMachineActivity.class);
+                        intent.putStringArrayListExtra("Food", (ArrayList<String>) nameList);
+                        startActivity(intent);
+                    } else {
+                        Toast.makeText(this, "Can't find Restaurant !", Toast.LENGTH_LONG).show();
                     }
                 });
             } catch (IOException e) {
@@ -101,6 +110,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         };
         new Thread(runnable).start();
+    }
+
+    private String parsingFoodPanda(String s) {
+        s = s.substring(s.indexOf("\"organicList\":{") + "\"organicList\":{".length() - 1);
+        return s.substring(0, s.indexOf(",\"search\":{"));
     }
 
     /**
@@ -131,11 +145,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         walking.setOnClickListener(this);
         foodPanda.setOnClickListener(this);
         uberEat.setOnClickListener(this);
-        test.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                foodPanda();
-            }
+        test.setOnClickListener(v -> {
+            foodPanda(v);
         });
     }
 }

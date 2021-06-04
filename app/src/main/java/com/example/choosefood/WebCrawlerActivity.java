@@ -1,28 +1,31 @@
 package com.example.choosefood;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
+import android.webkit.JavascriptInterface;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.choosefood.model.FoodPandaInfo;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.DataNode;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class WebCrawlerActivity extends AppCompatActivity {
 
     private static final String TAG = WebCrawlerActivity.class.getName();
 
     TextView webText;
+
+//    private WebView mWebView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,21 +62,21 @@ public class WebCrawlerActivity extends AppCompatActivity {
                 Connection conn = Jsoup.connect(url);
                 conn.header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:32.0) Gecko/    20100101 Firefox/32.0");
                 final Document docs = conn.get();
-                Elements datas = docs.getElementsByTag("script");
+                Elements scripts = docs.getElementsByTag("script");
                 runOnUiThread(() -> {
-                    for (Element data : datas) {
-                        for (DataNode node : data.dataNodes()) {
-                            if (node.toString().startsWith("window.__PRELOADED_STATE__")) {
-                                String dText = node.toString().substring(0, node.toString().indexOf("window.__PROVIDER_PROPS__"));
-                                try {
-                                    JSONObject vendors = (JSONObject) ((JSONObject) new JSONObject(dText).get("organicList")).get("vendors");
-                                    Log.d(TAG, "> VENDORS = " + vendors);
-                                    webText.setText(vendors.toString());
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
+                    for (Element script : scripts) {
+                        if (script.toString().startsWith("<script>window.__PRELOADED_STATE__")) {
+                            try {
+                                JSONObject vendorsJson = new JSONObject(parsingFoodPanda(script.toString()));
+                                JSONArray vendors = vendorsJson.getJSONArray("vendors");
+                                for (int i = 0; i < vendors.length(); i++) {
+//                                    nameList.add(vendors.getJSONObject(i).get("name").toString());
+                                    Log.d(TAG, "Name = " + vendors.getJSONObject(i).get("name"));
                                 }
-                                break;
+                            } catch (JSONException e) {
+                                e.printStackTrace();
                             }
+                            break;
                         }
                     }
                 });
@@ -84,18 +87,32 @@ public class WebCrawlerActivity extends AppCompatActivity {
         new Thread(runnable).start();
     }
 
-    private List<FoodPandaInfo> analyzeData(Elements elements) {
-        List<FoodPandaInfo> vendors = new ArrayList<>();
-        for (Element domElement : elements) {
-            FoodPandaInfo foodPandaInfo = new FoodPandaInfo();
-//            foodPandaInfo.setUrl();
-//            foodPandaInfo.setTitle();
-            vendors.add(foodPandaInfo);
-        }
-        return vendors;
+    private String parsingFoodPanda(String s) {
+        s = s.substring(s.indexOf("\"organicList\":{") + "\"organicList\":{".length() - 1);
+        return s.substring(0, s.indexOf(",\"search\":{"));
     }
 
+    @SuppressLint({"AddJavascriptInterface", "SetJavaScriptEnabled"})
     private void uberEat() {
-
+//        mWebView = new WebView(this);
+//        mWebView.getSettings().setJavaScriptEnabled(true);
+//        mWebView.addJavascriptInterface(new HtmlHandler(), "HtmlHandler");
+//        mWebView.setWebViewClient(new WebViewClient(){
+//            @Override
+//            public void onPageFinished(WebView view, String url) {
+//                super.onPageFinished(view, url);
+//                if (url == urlToLoad) {
+//                    mWebView.loadUrl("javascript:HtmlHandler.handleHtml(document.documentElement.outerHTML);");
+//                }
+//            }
+//        });
     }
+//    class HtmlHandler {
+//        @JavascriptInterface
+//        @SuppressWarnings("unused")
+//        public void handleHtml(String html) {
+//            // scrape the content here
+//
+//        }
+//    }
 }
